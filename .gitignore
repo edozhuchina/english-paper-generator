@@ -11,7 +11,7 @@ __pycache__/
 venv/
 
 # 临时自检数据库
-_selftest.sqlite3
+_selftest.sqlite3*
 
 # 用户上传与导出产物
 media/

@@ -15,9 +15,8 @@ from django.conf import settings
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import Count, Max, Q
-from django.http import FileResponse, HttpResponseBadRequest, JsonResponse
+from django.http import FileResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
-from django.urls import reverse_lazy
 from django.utils import timezone
 from django.views import View
 from django.views.decorators.http import require_POST
