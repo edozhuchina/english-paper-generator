@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}导入校验结果 · 小学英语出卷系统{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>导入校验结果</h1>
+    <div class="sub">批次 #{{ job.id }} · {{ job.original_filename }}</div>
+  </div>
+  <a class="btn" href="{% url 'import:home' %}">返回</a>
+</div>
+
+<div class="card">
+  <div class="stat-row">
+    <div class="stat-item"><div class="k">总行数</div><div class="v">{{ job.total_rows }}</div></div>
+    <div class="stat-item"><div class="k">可入库</div><div class="v ok">{{ valid_count }}</div></div>
+    <div class="stat-item"><div class="k">有问题</div><div class="v {% if error_count %}warn{% else %}ok{% endif %}">{{ error_count }}</div></div>
+  </div>
+</div>
+
+{% if report %}
+<div class="card">
+  <h2>问题明细</h2>
+  <table class="tbl">
+    <tr><th style="width:70px">行号</th><th>原题预览</th><th>级别</th><th>说明</th></tr>
+    {% for item in report %}
+      {% for err in item.errors %}
+      <tr>
+        <td>{% if forloop.first %}{{ item.sheet }}#{{ item.row }}{% endif %}</td>
+        <td>{% if forloop.first %}{{ item.stem_preview }}{% endif %}</td>
+        <td>
+          <span class="tag {% if err.level == 'error' %}tag-red{% else %}tag-orange{% endif %}">
+            {% if err.level == 'error' %}错误{% else %}提醒{% endif %}
+          </span>
+        </td>
+        <td>{{ err.message }} <span class="muted small">({{ err.code }})</span></td>
+      </tr>
+      {% endfor %}
+    {% endfor %}
+  </table>
+</div>
+{% endif %}
+
+<div class="card">
+  <h2>确认入库</h2>
+  <p class="muted small">
+    点击确认后，可入库的行会写入题库并自动通过审核；内容重复的题目会被跳过（不与已有题目冲突）。
+  </p>
+  <form method="post" action="{% url 'import:commit' job.id %}" style="display:inline">
+    {% csrf_token %}
+    <input type="hidden" name="skip_errors" value="1">
+    <button class="btn btn-primary" type="submit">确认入库（跳过有错的行）</button>
+  </form>
+  <form method="post" action="{% url 'import:cancel' job.id %}" style="display:inline;margin-left:8px">
+    {% csrf_token %}
+    <button class="btn" type="submit">取消这一批</button>
+  </form>
+</div>
+{% endblock %}

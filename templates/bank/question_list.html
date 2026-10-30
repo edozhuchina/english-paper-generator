@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% load static %}
+{% load question_tags %}
+
+{% block title %}题库 · 小学英语出卷系统{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>题库</h1>
+    <div class="sub">当前已收录 {{ total_count }} 道已审题目</div>
+  </div>
+  <div class="btn-group">
+    <a class="btn btn-primary" href="{% url 'bank:question-create' %}">+ 手动录题</a>
+    <a class="btn" href="{% url 'import:home' %}">批量导入</a>
+  </div>
+</div>
+
+<div class="card">
+  <form method="get" class="filters">
+    <div class="field">
+      <label>板块</label>
+      <select name="group">
+        <option value="">全部板块</option>
+        <option value="listening" {% if current_group == 'listening' %}selected{% endif %}>听力题</option>
+        <option value="vocab_grammar" {% if current_group == 'vocab_grammar' %}selected{% endif %}>词汇语法题</option>
+        <option value="reading" {% if current_group == 'reading' %}selected{% endif %}>阅读与完形</option>
+        <option value="subjective" {% if current_group == 'subjective' %}selected{% endif %}>主观题</option>
+        <option value="writing" {% if current_group == 'writing' %}selected{% endif %}>作文题</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>题型</label>
+      <select name="type">
+        <option value="">全部题型</option>
+        {% for t in types %}
+          <option value="{{ t.code }}" {% if current_type == t.code %}selected{% endif %}>
+            {{ t.name }}{% if t.code in type_count %}（{{ type_count|dict_get:t.code }}）{% endif %}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <label>年级</label>
+      <select name="grade">
+        <option value="">全部年级</option>
+        <option value="3" {% if current_grade == '3' %}selected{% endif %}>三年级</option>
+        <option value="4" {% if current_grade == '4' %}selected{% endif %}>四年级</option>
+        <option value="5" {% if current_grade == '5' %}selected{% endif %}>五年级</option>
+        <option value="6" {% if current_grade == '6' %}selected{% endif %}>六年级</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>难度</label>
+      <select name="difficulty">
+        <option value="">全部难度</option>
+        <option value="1" {% if current_difficulty == '1' %}selected{% endif %}>容易</option>
+        <option value="2" {% if current_difficulty == '2' %}selected{% endif %}>较易</option>
+        <option value="3" {% if current_difficulty == '3' %}selected{% endif %}>中等</option>
+        <option value="4" {% if current_difficulty == '4' %}selected{% endif %}>较难</option>
+        <option value="5" {% if current_difficulty == '5' %}selected{% endif %}>难</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>标签</label>
+      <select name="tag">
+        <option value="">全部标签</option>
+        {% for tag in tags %}
+          <option value="{{ tag.id }}" {% if current_tag == tag.id|stringformat:'s' %}selected{% endif %}>{{ tag.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field" style="min-width:200px">
+      <label>关键词</label>
+      <input type="text" name="q" value="{{ keyword }}" placeholder="题干 / 答案 / 材料中检索">
+    </div>
+    <div class="field">
+      <label>状态</label>
+      <select name="status">
+        <option value="">仅已审核</option>
+        <option value="draft" {% if current_status == 'draft' %}selected{% endif %}>草稿</option>
+        <option value="pending" {% if current_status == 'pending' %}selected{% endif %}>待审核</option>
+        <option value="rejected" {% if current_status == 'rejected' %}selected{% endif %}>已驳回</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" type="submit">筛选</button>
+    <a class="btn" href="{% url 'bank:question-list' %}">重置</a>
+  </form>
+</div>
+
+<div class="card" style="padding:0">
+  {% if questions %}
+  <table class="tbl">
+    <thead>
+      <tr>
+        <th style="width:52px">ID</th>
+        <th style="width:110px">题型</th>
+        <th>题干 / 材料</th>
+        <th style="width:120px">答案</th>
+        <th style="width:70px">年级</th>
+        <th style="width:60px">难度</th>
+        <th style="width:56px">分值</th>
+        <th style="width:110px">操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for q in questions %}
+      <tr>
+        <td class="muted">{{ q.id }}</td>
+        <td><span class="tag">{{ q.question_type.name }}</span></td>
+        <td>
+          {% if q.passage %}
+            <div class="muted small">【材料】{{ q.passage.title|default:q.passage.body|truncatechars:30 }}{% if q.sequence %} · 第{{ q.sequence }}小题{% endif %}</div>
+          {% endif %}
+          <div>{{ q.stem|default:"—"|truncatechars:60 }}</div>
+          {% if q.tags.all %}
+            <div>{% for t in q.tags.all %}<span class="tag tag-gray">{{ t.name }}</span>{% endfor %}</div>
+          {% endif %}
+        </td>
+        <td class="mono muted">{{ q.answer_text|truncatechars:30 }}</td>
+        <td>{{ q.get_grade_display }}</td>
+        <td>{{ q.get_difficulty_display }}</td>
+        <td>{{ q.suggested_score }}</td>
+        <td>
+          <a href="{% url 'bank:question-detail' q.pk %}">查看</a>
+          <a href="{% url 'bank:question-update' q.pk %}">编辑</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <div class="empty">
+      还没有符合条件的题目。<br>
+      可以先 <a href="{% url 'bank:question-create' %}">手动录一题</a>，
+      或加载内置样例题库：<code class="mono">python manage.py load_sample_bank</code>
+    </div>
+  {% endif %}
+</div>
+
+{% if is_paginated %}
+<div class="pagination">
+  {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request_params.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">上一页</a>
+  {% endif %}
+  <span class="current">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+  {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}{% for key, value in request_params.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">下一页</a>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

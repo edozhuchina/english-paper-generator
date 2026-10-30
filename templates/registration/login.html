@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}登录 · 小学英语出卷系统{% endblock %}
+
+{% block content %}
+<div class="login-wrap">
+  <div class="card login-card">
+    <h1>登录</h1>
+    <p class="muted small">题库与试卷只对登录用户开放，请使用后台账号登录。</p>
+
+    {% if form.errors %}
+      <div class="alert alert-error">用户名或密码不正确，请重试。</div>
+    {% endif %}
+
+    <form method="post" action="{% url 'login' %}">
+      {% csrf_token %}
+      <div class="field">
+        <label for="id_username">用户名</label>
+        <input type="text" name="username" id="id_username" autofocus required>
+      </div>
+      <div class="field" style="margin-top:12px">
+        <label for="id_password">密码</label>
+        <input type="password" name="password" id="id_password" required>
+      </div>
+      <input type="hidden" name="next" value="{{ next }}">
+      <div class="btn-group" style="margin-top:16px">
+        <button class="btn btn-primary" type="submit">登录</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

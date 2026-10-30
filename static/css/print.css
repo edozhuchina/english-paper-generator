@@ -1,0 +1,162 @@
+@page {
+  size: A4;
+  margin: 18mm 16mm;
+}
+
+body.print-page {
+  margin: 0;
+  background: #e9e9ec;
+  font-family: "Times New Roman", "宋体", "Microsoft YaHei", serif;
+  color: #000;
+  font-size: 11pt;
+  line-height: 1.65;
+}
+
+.toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 99;
+  background: #1f2937;
+  color: #fff;
+  padding: 8px 16px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  font-family: "Microsoft YaHei", sans-serif;
+  font-size: 13px;
+}
+.toolbar a, .toolbar button {
+  color: #fff;
+  background: #374151;
+  border: 1px solid #4b5563;
+  border-radius: 5px;
+  padding: 4px 12px;
+  cursor: pointer;
+  text-decoration: none;
+  font-family: inherit;
+  font-size: 13px;
+}
+.toolbar a:hover, .toolbar button:hover { background: #4b5563; }
+
+.a4 {
+  width: 210mm;
+  min-height: 297mm;
+  margin: 16px auto;
+  background: #fff;
+  padding: 18mm 16mm;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, .12);
+}
+
+/* --------------------------------------------------------- 卷头 */
+
+.paper-title {
+  text-align: center;
+  font-size: 17pt;
+  font-weight: 700;
+  margin: 0 0 2mm;
+}
+.paper-subtitle {
+  text-align: center;
+  font-size: 12pt;
+  margin: 0 0 2mm;
+}
+.paper-meta {
+  text-align: center;
+  font-size: 10.5pt;
+  color: #444;
+  margin: 0 0 5mm;
+}
+.student-info {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4mm;
+  margin-bottom: 3mm;
+}
+.student-info div { font-size: 10.5pt; }
+
+.score-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 4mm;
+  font-size: 10pt;
+  text-align: center;
+}
+.score-table th, .score-table td {
+  border: 1px solid #666;
+  padding: 2.5mm 1mm;
+}
+.score-table th { font-weight: 600; }
+
+/* --------------------------------------------------------- 大题 */
+
+.section { margin-bottom: 3mm; }
+.section-title {
+  text-align: center;
+  font-size: 13pt;
+  font-weight: 700;
+  margin: 5mm 0 1.5mm;
+  break-after: avoid;
+}
+.directions {
+  font-size: 10.5pt;
+  color: #333;
+  margin: 0 0 2mm;
+  font-style: italic;
+}
+
+.item { margin-bottom: 2.6mm; break-inside: avoid; }
+.item-stem { text-indent: 0; margin: 0 0 1mm; }
+.item-no { font-weight: 700; margin-right: 2mm; }
+
+.opts-vertical div { padding-left: 8mm; line-height: 1.5; }
+.opts-horizontal div { display: inline; margin-right: 8mm; }
+.opts-grid2 { display: grid; grid-template-columns: 1fr 1fr; }
+.opts-grid4 { display: grid; grid-template-columns: 1fr 1fr; }
+.opts-grid2 div, .opts-grid4 div { padding-left: 6mm; }
+
+.passage-box {
+  border: 1px solid #999;
+  padding: 2.5mm 3mm;
+  margin: 2mm 0 3mm;
+  font-size: 10.5pt;
+  line-height: 1.6;
+}
+.passage-title { text-align: center; font-weight: 700; margin-bottom: 1mm; }
+
+.blank-space {
+  display: inline-block;
+  min-width: 22mm;
+  border-bottom: 1px solid #000;
+  margin: 0 1mm;
+}
+.answer-lines div {
+  border-bottom: 1px solid #999;
+  height: 7mm;
+  margin-top: 2mm;
+}
+
+audio { width: 100%; margin: 1mm 0; }
+
+/* --------------------------------------------------------- 答案页 */
+
+.answer-item { margin-bottom: 1.5mm; }
+.answer-no { font-weight: 700; margin-right: 2mm; }
+.rubric-item { margin-left: 4mm; font-size: 10pt; }
+.sample-box { border: 1px dashed #999; padding: 2mm; margin-top: 1mm; font-size: 10pt; }
+
+@media print {
+  body.print-page { background: #fff; }
+  .toolbar { display: none; }
+  .a4 {
+    width: auto;
+    min-height: auto;
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+  }
+  .item { break-inside: avoid; page-break-inside: avoid; }
+  .section-title { break-after: avoid; page-break-after: avoid; }
+  .passage-box { break-inside: avoid; }
+  audio { display: none; }
+}

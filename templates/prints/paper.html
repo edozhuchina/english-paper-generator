@@ -1,0 +1,175 @@
+{% extends "prints/base_print.html" %}
+{% load render_tags %}
+
+{% block title %}{{ plan.title }}{% endblock %}
+
+{% block toolbar %}
+  {% if mode == "answer" %}
+    <a href="{% url 'print:paper' paper.pk %}">学生卷</a>
+  {% else %}
+    <a href="{% url 'print:paper' paper.pk %}?mode=answer">含答案</a>
+  {% endif %}
+  <a href="{% url 'paper:builder' paper.pk %}">返回组卷</a>
+{% endblock %}
+
+{% block content %}
+
+<header>
+  {% if plan.header.show_class_name %}
+  <div class="student-info">
+    <div>{{ plan.header.school_label }}</div>
+    <div>班级：____________</div>
+    <div>姓名：____________</div>
+  </div>
+  {% endif %}
+
+  <h1 class="paper-title">{{ plan.title }}</h1>
+  {% if plan.subtitle %}<div class="paper-subtitle">{{ plan.subtitle }}</div>{% endif %}
+  <div class="paper-meta">
+    考试时间：{{ plan.duration_min }} 分钟&nbsp;&nbsp;&nbsp;满分：{{ plan.total_score }} 分
+    {% if plan.header.note %}<br>{{ plan.header.note }}{% endif %}
+  </div>
+
+  {% if plan.header.show_score_table and plan.sections %}
+  <table class="score-table">
+    <tr>
+      {% for section in plan.sections %}<th>{{ section.display_title }}</th>{% endfor %}
+      <th>总分</th>
+    </tr>
+    <tr>
+      {% for section in plan.sections %}<td></td>{% endfor %}
+      <td></td>
+    </tr>
+  </table>
+  {% endif %}
+</header>
+
+{% for section in plan.sections %}
+<div class="section">
+  <h2 class="section-title">{{ section.display_title }}</h2>
+  {% if section.directions %}<p class="directions">{{ section.directions }}</p>{% endif %}
+  {% if section.audio and section.audio.url %}
+    <audio controls src="{{ section.audio.url }}"></audio>
+  {% endif %}
+
+  {% for item in section.items %}
+  <div class="item">
+    {% if item.passage %}
+      <div class="passage-box">
+        {% if item.passage.title %}<div class="passage-title">{{ item.passage.title }}</div>{% endif %}
+        {% if item.passage.image and item.passage.image.url %}
+          <div style="text-align:center"><img src="{{ item.passage.image.url }}" style="max-width:120mm"></div>
+        {% endif %}
+        {{ item.passage.body|linebreaksbr }}
+        {% if item.passage.audio and item.passage.audio.url %}
+          <audio controls src="{{ item.passage.audio.url }}"></audio>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    {% if item.stem %}
+      <div class="item-stem"><span class="item-no">{{ item.no }}</span>{{ item.stem|blanks_to_lines }}</div>
+    {% endif %}
+
+    {% if item.stem_image_url %}<div style="margin:1mm 0"><img src="{{ item.stem_image_url }}" style="max-width:60mm"></div>{% endif %}
+    {% if item.audio and item.audio.url and not item.passage %}
+      <audio controls src="{{ item.audio.url }}"></audio>
+      <div style="font-size:9pt;color:#666">（录音播放 {{ item.audio_play_count }} 遍）</div>
+    {% endif %}
+
+    {% if item.renderer_key == "choice" %}
+      <div class="{% option_layout_class item.layout %}">
+        {% for opt in item.options %}
+          <div><b>{{ opt.key }}.</b> {{ opt.text }}
+            {% if opt.image_url %}<img src="{{ opt.image_url }}" style="max-width:26mm;vertical-align:middle">{% endif %}
+          </div>
+        {% endfor %}
+      </div>
+
+    {% elif item.renderer_key == "order" %}
+      {% for entry in item.content.items %}
+        <div style="padding-left:6mm">（ &nbsp;&nbsp;&nbsp; ）{{ entry.text }}</div>
+      {% endfor %}
+
+    {% elif item.renderer_key == "judge" %}
+      {% for entry in item.content.statements %}
+        <div style="padding-left:6mm">{% if entry.no %}{{ entry.no }}. {% endif %}{{ entry.text }} &nbsp;（ T / F ）</div>
+      {% endfor %}
+
+    {% elif item.renderer_key == "blanks" %}
+      {% if item.content.word_bank %}
+        <div style="padding-left:6mm"><b>备选词：</b>{{ item.content.word_bank|join:"　" }}</div>
+      {% endif %}
+      {% if item.content.blanks %}
+        <div style="padding-left:6mm;font-size:10pt;color:#333">
+          <b>提示词：</b>{% for b in item.content.blanks %}{{ b.given }}{% if not forloop.last %}、{% endif %}{% endfor %}
+        </div>
+      {% endif %}
+      {% if not item.stem %}
+        {% for entry in item.content.items %}
+          <div style="padding-left:6mm">{{ forloop.counter }}. {{ entry.src|default:entry.text }} <span class="blank-space"></span></div>
+        {% endfor %}
+      {% endif %}
+
+    {% elif item.renderer_key == "dialogue" %}
+      {% for line in item.content.lines %}
+        <div style="padding-left:6mm"><b>{{ line.role }}:</b> {{ line.text|blanks_to_lines }}</div>
+      {% endfor %}
+      {% if item.content.pool %}
+        <div style="margin-top:1mm"><b>备选句子：</b></div>
+        {% for p in item.content.pool %}
+          <div style="padding-left:6mm">{{ p.key }}. {{ p.text }}</div>
+        {% endfor %}
+      {% endif %}
+
+    {% elif item.renderer_key == "unscramble" %}
+      <div style="padding-left:6mm"><b>所给词语：</b>{{ item.content.words|join:"　" }}</div>
+      {% if item.content.distractors %}
+        <div style="padding-left:6mm;font-size:10pt;color:#333"><b>干扰词：</b>{{ item.content.distractors|join:"　" }}</div>
+      {% endif %}
+      <div style="padding-left:6mm;margin-top:1mm;border-bottom:1px solid #666;height:6mm"></div>
+
+    {% elif item.renderer_key == "rewrite" %}
+      {% if item.content.source %}<div style="padding-left:6mm"><b>原句：</b>{{ item.content.source }}</div>{% endif %}
+      {% if item.content.requirement %}<div style="padding-left:6mm"><b>要求：</b>{{ item.content.requirement }}</div>{% endif %}
+      <div style="padding-left:6mm;margin-top:1mm;border-bottom:1px solid #666;height:6mm"></div>
+
+    {% elif item.renderer_key == "writing" %}
+      {% if item.content.topic %}<div style="padding-left:6mm"><b>题目：</b>{{ item.content.topic }}</div>{% endif %}
+      {% for p in item.content.prompts %}
+        <div style="padding-left:6mm">{{ p }}</div>
+      {% endfor %}
+      <div class="answer-lines">
+        {% for i in item.answer_lines|times %}<div></div>{% endfor %}
+      </div>
+    {% endif %}
+
+    {% if mode == "answer" %}
+      <div style="margin-top:1mm;font-size:10pt;color:#b91c1c">
+        <b>答案：</b>{% answer_display item %}
+        {% if item.explanation %}<br><span style="color:#555">解析：{{ item.explanation }}</span>{% endif %}
+      </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endfor %}
+
+{% if plan.media_manifest %}
+  <div class="section" style="margin-top:6mm">
+    <h2 class="section-title">听力音频清单</h2>
+    <table class="score-table">
+      <tr><th>位置</th><th>文件名</th><th>时长(秒)</th><th>播放次数</th></tr>
+      {% for entry in plan.media_manifest %}
+      <tr>
+        <td>{{ entry.no }}</td>
+        <td>{{ entry.filename }}</td>
+        <td>{{ entry.duration|default:"—" }}</td>
+        <td>{{ entry.play_count }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+{% endif %}
+
+{% endblock %}

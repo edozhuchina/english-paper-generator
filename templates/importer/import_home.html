@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}导入题库 · 小学英语出卷系统{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>批量导入题库</h1>
+    <div class="sub">Excel / CSV 两步走：先上传校验，确认无误再入库</div>
+  </div>
+  <a class="btn" href="{% url 'bank:question-list' %}">返回题库</a>
+</div>
+
+<div class="builder">
+  <div>
+    <div class="card">
+      <h2>第一步 · 下载模板</h2>
+      <p class="muted small">模板里已经内置了题型、年级、难度的下拉校验，直接按列填写即可。</p>
+      <a class="btn btn-primary" href="{% url 'import:template' %}">下载 Excel 模板</a>
+    </div>
+
+    <div class="card">
+      <h2>第二步 · 上传文件</h2>
+      <form method="post" action="{% url 'import:upload' %}" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-grid">
+          <div class="field field-full">
+            <label>选择文件（.xlsx / .csv）</label>
+            <input type="file" name="file" accept=".xlsx,.csv" required>
+          </div>
+          <div class="field">
+            <label>统一指定年级（可选）</label>
+            <select name="target_grade">
+              <option value="">按表格里填的年级</option>
+              <option value="3">三年级</option>
+              <option value="4">四年级</option>
+              <option value="5">五年级</option>
+              <option value="6">六年级</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>统一指定难度（可选）</label>
+            <select name="default_difficulty">
+              <option value="">按表格里填的难度</option>
+              <option value="1">容易</option>
+              <option value="2">较易</option>
+              <option value="3">中等</option>
+              <option value="4">较难</option>
+              <option value="5">难</option>
+            </select>
+          </div>
+        </div>
+        <div class="btn-group" style="margin-top:14px">
+          <button class="btn btn-primary" type="submit">上传并校验</button>
+        </div>
+      </form>
+      <div class="help" style="margin-top:10px">
+        上传只会做预校验并生成草稿，不会直接改数据库；确认后才真正入库。
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="card">
+      <h2>答案列怎么写</h2>
+      <table class="tbl">
+        <tr><th style="width:100px">题型</th><th>写法</th><th>示例</th></tr>
+        <tr><td>选择题</td><td>直接写选项字母</td><td class="mono">B</td></tr>
+        <tr><td>填空题</td><td>多空用 <code class="mono">|</code>，同空多解用 <code class="mono">/</code></td><td class="mono">plays|goes/GOES</td></tr>
+        <tr><td>判断题</td><td>T/F、正确/错误、√/× 均可</td><td class="mono">T,F,T</td></tr>
+        <tr><td>排序题</td><td>逗号分隔的数字</td><td class="mono">3,1,4,2</td></tr>
+        <tr><td>连词/改写/翻译</td><td>完整句子，多解用 <code class="mono">/</code></td><td class="mono">This is my mother.</td></tr>
+        <tr><td>作文</td><td>评分要点用 <code class="mono">;</code> 分隔、要点与分值用 <code class="mono">|</code>，范文用 <code class="mono">||</code> 接在后面</td><td class="mono">内容完整|6;时态正确|3||范文…</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>一材多题怎么填</h2>
+      <p class="small muted">
+        阅读理解、完形填空、听力短文这类「一篇材料带若干小题」的题目：<br>
+        同一材料的每个小题各占一行，<b>材料ID或标题</b> 列填同一个标题，
+        <b>材料正文</b> 只在<b>第一行</b>填写一次，<b>小题序号</b> 写 1、2、3…
+      </p>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>最近的导入批次</h2>
+  {% if recent_jobs %}
+  <table class="tbl">
+    <tr>
+      <th>ID</th><th>文件</th><th>状态</th><th>总行</th><th>有效</th><th>错误</th><th>入库</th><th>重复</th><th>时间</th>
+    </tr>
+    {% for job in recent_jobs %}
+    <tr>
+      <td>{{ job.id }}</td>
+      <td>{{ job.original_filename }}</td>
+      <td><span class="tag {% if job.status == 'done' %}tag-green{% elif job.status == 'cancelled' %}tag-gray{% else %}tag-orange{% endif %}">{{ job.get_status_display }}</span></td>
+      <td>{{ job.total_rows }}</td>
+      <td>{{ job.valid_rows }}</td>
+      <td>{{ job.error_rows }}</td>
+      <td>{{ job.imported_rows }}</td>
+      <td>{{ job.skipped_duplicate }}</td>
+      <td class="small muted">{{ job.created_at|date:"Y-m-d H:i" }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}
+    <div class="empty">还没有导入记录。</div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% load static %}
+{% load question_tags %}
+
+{% block title %}组卷 · {{ paper.title }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ paper.title }}</h1>
+    <div class="sub">
+      {{ paper.get_grade_display }}{% if paper.term %} · {{ paper.get_term_display }}{% endif %}
+      · {{ paper.get_exam_type_display }} · {{ paper.duration_min }} 分钟
+      · <a href="{% url 'paper:list' %}">返回试卷列表</a>
+    </div>
+  </div>
+  <div class="btn-group">
+    <a class="btn" href="{% url 'print:paper' paper.pk %}" target="_blank">打印预览 / 存 PDF</a>
+    <a class="btn btn-primary" href="{% url 'paper:export-docx' paper.pk %}">导出 Word</a>
+  </div>
+</div>
+
+<div class="card" id="score-bar" data-target="{{ paper.target_score }}">
+  <div class="stat-row">
+    <div class="stat-item">
+      <div class="k">实际总分</div>
+      <div class="v {% if paper.score_gap == 0 %}ok{% else %}warn{% endif %}" id="stat-total">{{ paper.computed_total_score }}</div>
+    </div>
+    <div class="stat-item">
+      <div class="k">目标总分</div>
+      <div class="v">{{ paper.target_score }}</div>
+    </div>
+    <div class="stat-item">
+      <div class="k">与目标的差值</div>
+      <div class="v {% if paper.score_gap == 0 %}ok{% else %}warn{% endif %}" id="stat-gap">{{ paper.score_gap }}</div>
+    </div>
+    <div class="stat-item">
+      <div class="k">题目数量</div>
+      <div class="v" id="stat-count">{{ paper.question_count }}</div>
+    </div>
+    <div class="stat-item">
+      <div class="k">板块数量</div>
+      <div class="v" id="stat-sections">{{ paper.sections.count }}</div>
+    </div>
+  </div>
+</div>
+
+<div class="builder">
+  <!-- ------------------------------------------------ 左：题库 -->
+  <div class="panel">
+    <div class="panel-head">
+      <h3>题库 · 挑题</h3>
+      <span class="muted small">勾选后点底部按钮加入</span>
+    </div>
+    <div class="panel-body">
+      <form method="get" class="filters" style="margin-bottom:12px">
+        <input type="hidden" name="page" value="1">
+        <div class="field">
+          <label>板块</label>
+          <select name="group" onchange="this.form.submit()">
+            <option value="">全部</option>
+            <option value="listening" {% if current_group == 'listening' %}selected{% endif %}>听力题</option>
+            <option value="vocab_grammar" {% if current_group == 'vocab_grammar' %}selected{% endif %}>词汇语法</option>
+            <option value="reading" {% if current_group == 'reading' %}selected{% endif %}>阅读完形</option>
+            <option value="subjective" {% if current_group == 'subjective' %}selected{% endif %}>主观题</option>
+            <option value="writing" {% if current_group == 'writing' %}selected{% endif %}>作文</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>题型</label>
+          <select name="type" onchange="this.form.submit()">
+            <option value="">全部题型</option>
+            {% for t in types %}
+              <option value="{{ t.code }}" {% if current_type == t.code %}selected{% endif %}>{{ t.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label>年级</label>
+          <select name="grade" onchange="this.form.submit()">
+            <option value="">全部</option>
+            <option value="3" {% if current_grade == '3' %}selected{% endif %}>三年级</option>
+            <option value="4" {% if current_grade == '4' %}selected{% endif %}>四年级</option>
+            <option value="5" {% if current_grade == '5' %}selected{% endif %}>五年级</option>
+            <option value="6" {% if current_grade == '6' %}selected{% endif %}>六年级</option>
+          </select>
+        </div>
+        <div class="field" style="min-width:160px">
+          <label>关键词</label>
+          <input type="text" name="q" value="{{ keyword }}" placeholder="题干 / 答案">
+        </div>
+        <button class="btn btn-sm" type="submit">筛选</button>
+      </form>
+
+      {% if candidates %}
+        {% for q in candidates %}
+          <div class="q-item {% if q.id in selected_ids %}selected{% endif %}" data-question-id="{{ q.id }}">
+            <input type="checkbox" class="q-check" value="{{ q.id }}" {% if q.id in selected_ids %}disabled{% endif %}>
+            <div class="q-main">
+              {% if q.passage %}
+                <div class="q-meta">【{{ q.passage.get_kind_display }}】{{ q.passage.title|default:q.passage.body|truncatechars:24 }}</div>
+              {% endif %}
+              <div class="q-stem">{{ q.stem|default:"（材料题）"|truncatechars:56 }}</div>
+              {% if q.content.options %}
+                <div class="q-opts">
+                  {% for opt in q.content.options %}{{ opt.key }}. {{ opt.text }}{% if not forloop.last %} · {% endif %}{% endfor %}
+                </div>
+              {% endif %}
+              <div class="q-meta">
+                <span class="tag">{{ q.question_type.name }}</span>
+                {{ q.get_grade_display }} · 难度{{ q.difficulty }} · 建议{{ q.suggested_score }}分
+                {% if q.audio_id or q.passage.audio_id %} · 🔊 音频{% endif %}
+                · 用过{{ q.usage_count }}次
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+        <div class="muted small">最多展示 40 条，用筛选条件缩小范围。</div>
+      {% else %}
+        <div class="empty">
+          没有匹配的题目。<br>
+          <a href="{% url 'bank:question-create' %}">手动录题</a> 或执行样例题库命令。
+        </div>
+      {% endif %}
+    </div>
+    <div class="sticky-bar">
+      <span class="small muted">已选 <b id="checked-count">0</b> 题</span>
+      <button class="btn btn-primary" id="btn-add">加入选中题目 →</button>
+    </div>
+  </div>
+
+  <!-- ------------------------------------------------ 右：试卷 -->
+  <div class="panel">
+    <div class="panel-head">
+      <h3>试卷结构</h3>
+      <button class="btn btn-sm" id="btn-new-section">+ 新板块</button>
+    </div>
+    <div class="panel-body" id="paper-panel">
+      {% for section in paper.sections.all %}
+        <div class="section-block" data-section-id="{{ section.id }}">
+          <div class="section-head">
+            <div style="flex:1">
+              <div class="title">{{ section.display_title|default:forloop.counter }} {{ section.title }}</div>
+              {% if section.directions %}<div class="small muted">{{ section.directions|truncatechars:40 }}</div>{% endif %}
+            </div>
+            <span class="small muted nowrap">{{ section.items.count }}题 · {{ section.subtotal }}分</span>
+            <button class="btn btn-sm btn-danger js-del-section" data-section-id="{{ section.id }}">删除板块</button>
+          </div>
+          <div class="section-body" data-section-id="{{ section.id }}">
+            {% for item in section.items.all %}
+              <div class="q-item" draggable="true" data-item-id="{{ item.id }}" data-question-id="{{ item.question_id }}">
+                <span class="q-drag" title="拖动排序">⠿</span>
+                <div class="q-main">
+                  <div class="q-stem"><b>{{ forloop.counter }}.</b> {{ item.question.stem|default:"（材料题）"|truncatechars:44 }}</div>
+                  <div class="q-meta">
+                    <span class="tag tag-gray">{{ item.question.question_type.name }}</span>
+                    {% if item.question.passage %}<span class="muted">[{{ item.question.passage.title|truncatechars:14 }}]</span>{% endif %}
+                  </div>
+                </div>
+                <div class="q-actions">
+                  <input class="points-input js-points" type="number" step="0.5" min="0" value="{{ item.points }}" data-item-id="{{ item.id }}" title="分值">
+                  <button class="btn btn-sm btn-danger js-remove" data-item-id="{{ item.id }}">移除</button>
+                </div>
+              </div>
+            {% empty %}
+              <div class="muted small dropzone-empty">把左边的题目拖到这里</div>
+            {% endfor %}
+          </div>
+        </div>
+      {% empty %}
+        <div class="empty">还没有板块，先点右上「新板块」。</div>
+      {% endfor %}
+    </div>
+    <div class="sticky-bar">
+      <span class="small muted">拖动 ⠿ 可调整顺序，跨板块也能拖</span>
+      <span class="small">合计 <b id="stat-total2">{{ paper.computed_total_score }}</b> 分</span>
+    </div>
+  </div>
+</div>
+
+<script id="paper-config" type="application/json">
+{
+  "paperId": {{ paper.id }},
+  "urls": {
+    "add": "{% url 'paper:item-add' paper.pk %}",
+    "reorder": "{% url 'paper:item-reorder' paper.pk %}",
+    "remove": "{% url 'paper:item-remove' paper.pk 0 %}",
+    "update": "{% url 'paper:item-update' paper.pk 0 %}",
+    "sectionCreate": "{% url 'paper:section-create' paper.pk %}",
+    "sectionUpdate": "{% url 'paper:section-update' paper.pk 0 %}",
+    "sectionDelete": "{% url 'paper:section-delete' paper.pk 0 %}"
+  }
+}
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/builder.js' %}"></script>
+{% endblock %}

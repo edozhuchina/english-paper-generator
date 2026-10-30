@@ -1,0 +1,9 @@
+Django==5.2.18
+mysqlclient==2.3.0
+openpyxl==3.1.5
+python-docx==1.2.0
+Pillow==13.0.0
+
+# mysqlclient 备用方案（若本机 wheel 不可用）：
+# PyMySQL==1.2.3
+# cryptography==46.0.0

@@ -1,0 +1,30 @@
+# 环境与密钥 —— 绝不能进版本库
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# 虚拟环境
+.venv/
+venv/
+
+# 临时自检数据库
+_selftest.sqlite3
+
+# 用户上传与导出产物
+media/
+staticfiles/
+
+# 数据库备份
+backups/
+
+# 构建产物
+build/
+dist/
+
+# 系统文件
+.DS_Store
+Thumbs.db
+desktop.ini

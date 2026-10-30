@@ -1,0 +1,44 @@
+{% extends "prints/base_print.html" %}
+{% load render_tags %}
+
+{% block title %}参考答案 · {{ plan.title }}{% endblock %}
+
+{% block toolbar %}
+  <a href="{% url 'print:paper' paper.pk %}">学生卷</a>
+  <a href="{% url 'paper:builder' paper.pk %}">返回组卷</a>
+{% endblock %}
+
+{% block content %}
+<h2 class="section-title">{{ plan.title }} · 参考答案与解析</h2>
+
+{% for section in plan.sections %}
+  {% if section.items %}
+  <div class="section">
+    <h3>{{ section.display_title }}</h3>
+    {% for item in section.items %}
+      <div class="answer-item">
+        <span class="answer-no">{{ item.no }}</span>{% answer_display item %}
+        （{{ item.points }} 分）
+        {% if item.explanation %}
+          <div style="color:#555;font-size:10pt">解析：{{ item.explanation }}</div>
+        {% endif %}
+        {% if item.answer.rubric %}
+          <div class="rubric-item">
+            评分要点：{% for r in item.answer.rubric %}{{ r.point }}（{{ r.score }}分）{% if not forloop.last %}；{% endif %}{% endfor %}
+          </div>
+        {% endif %}
+        {% if item.answer.sample %}
+          <div class="sample-box">
+            <b>参考范文：</b><br>
+            {% for line in item.answer.sample %}{{ line|linebreaksbr }}{% endfor %}
+          </div>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+{% endfor %}
+
+{% if paper.headscores %}
+{% endif %}
+{% endblock %}

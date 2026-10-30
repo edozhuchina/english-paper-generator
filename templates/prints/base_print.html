@@ -1,0 +1,19 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>{% block title %}试卷{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/print.css' %}">
+</head>
+<body class="print-page">
+  <div class="toolbar no-print">
+    <button onclick="window.print()">打印 / 另存 PDF</button>
+    {% block toolbar %}{% endblock %}
+    <span style="color:#9ca3af">A4 · 页边距已在打印样式中设置</span>
+  </div>
+  <div class="a4">
+    {% block content %}{% endblock %}
+  </div>
+</body>
+</html>

@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{% if object %}编辑题目{% else %}录入新题{% endif %} · 小学英语出卷系统{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{% if object %}编辑题目 #{{ object.pk }}{% else %}录入新题{% endif %}</h1>
+    <div class="sub">选择题型后，下方会自动出现对应的结构化录入区</div>
+  </div>
+  <a class="btn" href="{% url 'bank:question-list' %}">返回题库</a>
+</div>
+
+<script id="renderer-map" type="application/json">
+{
+  {% for t in types %}"{{ t.code }}": "{{ t.renderer_key }}"{% if not forloop.last %},{% endif %}{% endfor %}
+}
+</script>
+
+<form id="question-form" method="post" novalidate>
+  {% csrf_token %}
+
+  <div class="card">
+    <h2>基本信息</h2>
+    <div class="form-grid">
+      {% for field in form %}
+        {% if field.name in "question_type,grade,term,difficulty,code,suggested_score,options_layout,expected_word_count,review_status,tags" %}
+          <div class="field">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}<div class="help">{{ field.help_text }}</div>{% endif %}
+            {% for error in field.errors %}<div class="help" style="color:var(--danger)">{{ error }}</div>{% endfor %}
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>题目内容</h2>
+    <div class="form-grid">
+      <div class="field field-full">
+        <label for="{{ form.stem.id_for_label }}">题干</label>
+        {{ form.stem }}
+        <div class="help">用 ___ 表示填空位；需要换行时用 || 分隔。</div>
+      </div>
+    </div>
+    <div id="structured-panel" style="padding-top:12px"></div>
+  </div>
+
+  <div class="card">
+    <h2>结构与答案（自动生成，可手工微调）</h2>
+    <div class="form-grid">
+      <div class="field field-full">
+        <label for="{{ form.content.id_for_label }}">题干结构 content</label>
+        {{ form.content }}
+        {% for error in form.content.errors %}<div class="help" style="color:var(--danger)">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="field field-full">
+        <label for="{{ form.answer.id_for_label }}">标准答案 answer</label>
+        {{ form.answer }}
+        {% for error in form.answer.errors %}<div class="help" style="color:var(--danger)">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="field field-full">
+        <label for="{{ form.explanation.id_for_label }}">解析</label>
+        {{ form.explanation }}
+      </div>
+    </div>
+  </div>
+
+  {% if form.non_field_errors %}
+    <div class="alert alert-error">{{ form.non_field_errors }}</div>
+  {% endif %}
+
+  <div class="btn-group">
+    <button class="btn btn-primary" type="submit">保存</button>
+    <a class="btn" href="{% url 'bank:question-list' %}">取消</a>
+  </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/question_form.js' %}"></script>
+{% endblock %}

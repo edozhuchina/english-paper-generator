@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}题目 #{{ question.pk }} · 小学英语出卷系统{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ question.question_type.name }} · #{{ question.pk }}</h1>
+    <div class="sub">
+      {{ question.get_grade_display }}{% if question.term %} · {{ question.get_term_display }}{% endif %}
+      · 难度 {{ question.get_difficulty_display }}
+      · 建议分值 {{ question.suggested_score }} 分
+      · 被组卷 {{ question.usage_count }} 次
+    </div>
+  </div>
+  <div class="btn-group">
+    <a class="btn" href="{% url 'bank:question-update' question.pk %}">编辑</a>
+    <a class="btn" href="{% url 'bank:question-list' %}">返回题库</a>
+  </div>
+</div>
+
+<div class="builder">
+  <div>
+    <div class="card">
+      <h2>题目</h2>
+      {% if question.passage %}
+        <div style="border-left:3px solid var(--brand);padding-left:10px;margin-bottom:12px">
+          <div class="small muted">【{{ question.passage.get_kind_display }}】{{ question.passage.title }}</div>
+          <div>{{ question.passage.body|linebreaksbr }}</div>
+          {% if question.passage.audio %}
+            <div class="small muted">听力材料：{{ question.passage.audio.original_filename }}</div>
+          {% endif %}
+        </div>
+      {% endif %}
+
+      <div style="font-size:15px;margin-bottom:10px">{{ question.stem|default:"（无题干）"|linebreaksbr }}</div>
+
+      {% if question.stem_image %}
+        <div><img src="{{ question.stem_image.url }}" style="max-width:320px;border:1px solid var(--line)"></div>
+      {% endif %}
+
+      {% if question.options %}
+        <div style="margin:8px 0">
+          {% for opt in question.options %}
+            <div style="padding:2px 0">{{ opt.key }}. {{ opt.text }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      {% if question.audio %}
+        <div class="card" style="margin:10px 0">
+          <div class="small muted">音频（点击播放）</div>
+          <audio controls src="{{ question.audio.url }}" style="width:100%"></audio>
+        </div>
+      {% endif %}
+
+      <table class="tbl" style="margin-top:10px">
+        <tr><th style="width:90px">标准答案</th><td class="mono">{{ question.answer_text }}</td></tr>
+        <tr><th>解析</th><td>{{ question.explanation|default:"—"|linebreaksbr }}</td></tr>
+        <tr><th>标签</th><td>{% for t in question.tags.all %}<span class="tag">{{ t.name }}</span>{% empty %}—{% endfor %}</td></tr>
+        <tr><th>选项排版</th><td>{{ question.get_options_layout_display }}</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div>
+    <div class="card">
+      <h2>存储结构（JSON）</h2>
+      <div class="field">
+        <label>content</label>
+        <textarea class="mono" rows="10" readonly>{{ question.content|pprint }}</textarea>
+      </div>
+      <div class="field" style="margin-top:10px">
+        <label>answer</label>
+        <textarea class="mono" rows="8" readonly>{{ question.answer|pprint }}</textarea>
+      </div>
+      <div class="field" style="margin-top:10px">
+        <label>去重指纹</label>
+        <input class="mono" value="{{ question.duplicate_key }}" readonly>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
