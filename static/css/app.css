@@ -205,3 +205,6 @@ table.tbl tr:hover td { background: #fcfcfd; }
 .login-card { width: 100%; max-width: 380px; margin-bottom: 0; }
 .login-card h1 { font-size: 18px; margin-bottom: 4px; }
 .login-card .field input { width: 100%; }
+.login-card .field + .field { margin-top: 12px; }
+.login-card .help ul { margin: 4px 0 0; padding-left: 18px; }
+.field-error { color: var(--danger); }

@@ -120,7 +120,8 @@ class LoginFlowTests(TestCase):
     def test_wrong_password_stays_on_login_form(self):
         response = self.client.post("/login/", {"username": "teacher", "password": "wrong"})
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "用户名或密码不正确")
+        # 具体文案由 Django 的认证表单给出（中文翻译会变），这里只断言表单确实报错
+        self.assertTrue(response.context["form"].non_field_errors())
 
     def test_logout_ends_the_session(self):
         self.client.login(username="teacher", password="pw-selftest-2026")

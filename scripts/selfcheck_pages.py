@@ -40,21 +40,31 @@ def login(client: Client) -> None:
     """全站登录保护后，所有业务页面都需要先登录。"""
     user, _ = User.objects.get_or_create(username="selfcheck")
     user.set_password("selfcheck-2026")
+    user.is_active = True
     user.save()
     client.force_login(user)
 
 
 def main():
-    client = Client()
+    # ALLOWED_HOSTS 只放行本机后，测试客户端的默认 host（testserver）会被拦，所以显式指定
+    client = Client(SERVER_NAME="127.0.0.1")
     failures = 0
 
     # 登录保护：未登录访问业务页面必须被拦到 /login/
-    guard = Client().get("/bank/")
+    guard = Client(SERVER_NAME="127.0.0.1").get("/bank/")
     if guard.status_code == 302 and "/login/" in guard.headers.get("Location", ""):
         print("[OK ] 302 登录保护      /bank/（未登录被拦截）")
     else:
         failures += 1
         print(f"[FAIL] {guard.status_code} 登录保护      /bank/ 未拦截")
+
+    # 注册页必须对未登录用户开放，否则登录保护会把注册入口一起挡掉
+    signup = Client(SERVER_NAME="127.0.0.1").get("/register/")
+    if signup.status_code == 200:
+        print("[OK ] 200 注册页          /register/（未登录可访问）")
+    else:
+        failures += 1
+        print(f"[FAIL] {signup.status_code} 注册页          /register/ 未登录打不开")
 
     login(client)
 

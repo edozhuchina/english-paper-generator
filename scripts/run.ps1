@@ -4,6 +4,10 @@ $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
 
+# 固定配置模块：否则会继承当前 shell 里的 DJANGO_SETTINGS_MODULE（例如自检脚本留下的
+# config.settings_sqlite），数据就会悄悄写进自检用的 _selftest.sqlite3 而不是 MySQL。
+$env:DJANGO_SETTINGS_MODULE = "config.settings"
+
 $python = Join-Path $root ".venv\Scripts\python.exe"
 if (-not (Test-Path $python)) {
     Write-Host "未找到虚拟环境 .venv，请先执行：" -ForegroundColor Red

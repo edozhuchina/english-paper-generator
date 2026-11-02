@@ -1,6 +1,7 @@
 from django.db.models import Count, Q
 from django.http import HttpResponseRedirect, JsonResponse
 from django.urls import reverse_lazy
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.generic import CreateView, DetailView, ListView, UpdateView, View
 
 from apps.bank.models import Question
@@ -137,5 +138,12 @@ class QuestionDeleteView(View):
         if question is None:
             return JsonResponse({"ok": False, "error": "题目不存在"}, status=404)
         question.delete()
-        next_url = request.POST.get("next") or "/bank/"
+        # next 来自表单，必须校验：否则 /bank/1/delete/ 可以被做成跳转到任意外站的中转页
+        next_url = request.POST.get("next") or ""
+        if not url_has_allowed_host_and_scheme(
+            next_url,
+            allowed_hosts={request.get_host()},
+            require_https=request.is_secure(),
+        ):
+            next_url = "/bank/"
         return HttpResponseRedirect(next_url)

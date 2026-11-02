@@ -65,6 +65,7 @@ MYSQL_DATABASE=english_exam
 | 模块 | 路径 | 说明 |
 |---|---|---|
 | 登录 | `/login/` | 全站登录保护；未登录访问任何业务页都会跳到这里 |
+| 注册 | `/register/` | 自助注册**待启用**账号，管理员在后台选中账号执行「启用所选用户」后才能登录；`.env` 里 `ALLOW_SELF_REGISTRATION=0` 可关闭注册 |
 | 题库列表 | `/bank/` | 按题型/年级/难度/标签/关键词筛选，支持全文检索题干与答案 |
 | 手动录题 | `/bank/create/` | 选择题型后自动出现对应结构化表单（选项/答案/评分要点） |
 | 批量导入 | `/import/` | 下载 Excel 模板 → 上传校验 → 确认入库，含行级错误与重复跳过 |
@@ -80,6 +81,7 @@ MYSQL_DATABASE=english_exam
 config/            Django 项目配置（settings 从 .env 读取）
 apps/
   core/            抽象基类（时间戳、软删除）与全局枚举
+  accounts/        账号自助注册（复用 django.contrib.auth 的 User）
   catalog/         题型字典 QuestionType、标签 Tag
   bank/            题库核心：Question / Passage / MediaAsset
   importer/        Excel/CSV/Word/AI 四种录入，共用草稿表与校对流程
@@ -111,6 +113,18 @@ samples/           导入模板输出位置
 ## 登录与备份
 
 **登录保护。** 全站由 `LoginRequiredMiddleware` 接管：除登录页与后台登录页外，任何页面（含所有 AJAX 接口）都要求先登录，未登录一律 302 到 `/login/`。账号就是后台账号，退出入口在右上角。
+
+**自助注册。** `/register/` 使用 Django 自带的 `UserCreationForm`（带密码强度校验），只收用户名、邮箱和密码。提交后账号是**待启用**状态（`is_active=False`）：不能登录，也没有 `is_staff`，登录页会明确提示「还需要管理员启用」。启用方式：后台 → 用户 → 勾选该账号 → 动作选「启用所选用户（允许登录）」→ 执行（列表里未启用的账号排在最前，也有「有效」列可直接看状态）。`.env` 里 `ALLOW_SELF_REGISTRATION=0` 可完全关闭注册。
+
+**安全基线。** 这几点是刻意配的，改动前请确认后果：
+
+- `LoginRequiredMiddleware` 全站登录保护，只有登录页 / 注册页 / 后台登录页公开；
+- 注册出来的账号必须人工启用 —— 否则任何人注册一下就能删改整个题库；
+- `ALLOWED_HOSTS` 只放行 `127.0.0.1` / `localhost`（可用 `.env` 的 `DJANGO_ALLOWED_HOSTS` 追加），主机名不可伪造，阻断 DNS rebinding；
+- 所有 POST 走 CSRF 校验，删除类跳转的 `next` 参数用 `url_has_allowed_host_and_scheme` 限定在本站；
+- 导入批次只能由创建人本人或管理员提交 / 取消。
+
+> ⚠️ **仍然不建议暴露到局域网/公网**：`DEBUG=True` 时异常页会显示源码片段与环境信息，且本项目没有做登录频率限制。要对外使用，至少先设 `DEBUG=0`、`collectstatic`、前面加一层反向代理与鉴权。
 
 **数据库备份。** `scripts\backup_db.ps1` 读取 `.env` 里的连接信息，用 `mysqldump` 导出一份带时间戳的 `.sql` 到 `backups\`，默认只保留最近 14 份。密码通过临时 defaults 文件传给 mysqldump，不出现在命令行、导出后立即删除。图片与音频在 `media\`，需要的话单独复制该目录。
 

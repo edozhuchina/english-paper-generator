@@ -10,7 +10,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = env.get("DJANGO_SECRET_KEY", "django-insecure-local-exam-gen-2026")
 DEBUG = env.get_bool("DEBUG", True)
-ALLOWED_HOSTS = ["127.0.0.1", "localhost", "*"]
+# 只允许本机访问：去掉 "*" 之后，Host 头不可伪造，恶意网页没法用 DNS rebinding 打本机服务。
+# 需要用局域网 IP 访问时，在 .env 里写 DJANGO_ALLOWED_HOSTS=127.0.0.1,localhost,192.168.1.10
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in env.get("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
+    if host.strip()
+]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -20,6 +26,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "apps.core",
+    "apps.accounts",
     "apps.catalog",
     "apps.bank",
     "apps.importer",
@@ -96,6 +103,9 @@ USE_TZ = False
 LOGIN_URL = "/login/"
 LOGIN_REDIRECT_URL = "/papers/"
 LOGOUT_REDIRECT_URL = "/login/"
+
+# 自助注册开关：置 0 后 /register/ 会提示“已关闭”并退回登录页
+ALLOW_SELF_REGISTRATION = env.get_bool("ALLOW_SELF_REGISTRATION", True)
 
 STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]

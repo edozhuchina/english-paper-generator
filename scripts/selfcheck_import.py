@@ -65,11 +65,13 @@ def build_xlsx() -> bytes:
 
 def main():
     data = build_xlsx()
-    client = Client()
+    # ALLOWED_HOSTS 只放行本机后，测试客户端的默认 host（testserver）会被拦，所以显式指定
+    client = Client(SERVER_NAME="127.0.0.1")
 
     # 全站登录保护后，上传 / 入库接口都需要登录态
     user, _ = User.objects.get_or_create(username="selfcheck")
     user.set_password("selfcheck-2026")
+    user.is_active = True
     user.save()
     client.force_login(user)
 

@@ -8,8 +8,8 @@
     <h1>登录</h1>
     <p class="muted small">题库与试卷只对登录用户开放，请使用后台账号登录。</p>
 
-    {% if form.errors %}
-      <div class="alert alert-error">用户名或密码不正确，请重试。</div>
+    {% if form.non_field_errors %}
+      <div class="alert alert-error">{{ form.non_field_errors|join:"；" }}</div>
     {% endif %}
 
     <form method="post" action="{% url 'login' %}">
@@ -25,7 +25,9 @@
       <input type="hidden" name="next" value="{{ next }}">
       <div class="btn-group" style="margin-top:16px">
         <button class="btn btn-primary" type="submit">登录</button>
+        <a class="btn" href="{% url 'register' %}">注册新账号</a>
       </div>
+      <p class="muted small" style="margin-top:12px">新注册的账号需要管理员在后台启用后才能登录。</p>
     </form>
   </div>
 </div>

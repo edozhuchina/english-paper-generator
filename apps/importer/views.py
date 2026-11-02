@@ -117,9 +117,9 @@ class CommitView(View):
     """确认无误后正式入库。"""
 
     def post(self, request, job_id):
-        job = ImportJob.objects.filter(pk=job_id).first()
+        job, error = _load_job(request, job_id)
         if job is None:
-            messages.error(request, "导入批次不存在")
+            messages.error(request, error)
             return redirect("import:home")
 
         skip_errors = request.POST.get("skip_errors") == "1"
@@ -137,10 +137,22 @@ class CommitView(View):
 
 class CancelView(View):
     def post(self, request, job_id):
-        job = ImportJob.objects.filter(pk=job_id).first()
-        if job:
-            job.status = "cancelled"
-            job.save(update_fields=["status"])
-            ImportDraft.objects.filter(job=job, status="pending").update(status="discarded")
-            messages.info(request, "已取消该批次")
+        job, error = _load_job(request, job_id)
+        if job is None:
+            messages.error(request, error)
+            return redirect("import:home")
+        job.status = "cancelled"
+        job.save(update_fields=["status"])
+        ImportDraft.objects.filter(job=job, status="pending").update(status="discarded")
+        messages.info(request, "已取消该批次")
         return redirect("import:home")
+
+
+def _load_job(request, job_id: int):
+    """取批次并校验归属：只有创建人本人或管理员能动，否则就是越权。"""
+    job = ImportJob.objects.filter(pk=job_id).first()
+    if job is None:
+        return None, "导入批次不存在"
+    if job.operator_id and job.operator_id != request.user.pk and not request.user.is_staff:
+        return None, "无权操作他人的导入批次"
+    return job, ""
