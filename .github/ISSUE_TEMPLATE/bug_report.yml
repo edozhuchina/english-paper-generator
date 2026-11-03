@@ -1,0 +1,60 @@
+name: Bug 报告
+description: 功能不正常、报错、导出结果与预期不符
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈。这个系统是本地单机工具，把**复现步骤**写清楚基本就能定位。
+        服务端报错在启动窗口（`python manage.py runserver`）里能看到完整堆栈，直接粘贴过来。
+
+  - type: input
+    id: environment
+    attributes:
+      label: 运行环境
+      description: 操作系统 / Python / Django / 数据库
+      placeholder: "Windows 11 / Python 3.12 / Django 5.2 / MySQL 8.0"
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: 发生了什么
+      description: 实际现象，以及你期望看到的结果
+      placeholder: |
+        在组卷页加入 5 道单选题后点「导出 Word」，
+        期望下载到一个 .docx，实际页面返回 500。
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 复现步骤
+      description: 请写清具体页面路径和操作顺序，能稳定复现最好
+      placeholder: |
+        1. 打开 /papers/，进入试卷「五年级期中」
+        2. 题库筛选：题型=单项选择，年级=五年级
+        3. 勾选 5 道题，点「加入试卷」
+        4. 点「导出 Word」
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 报错信息 / 日志
+      description: 控制台堆栈，或浏览器 Network 里该请求的响应内容
+      render: shell
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: 已经做过的排查
+      description: 不确定就先不勾，这些信息本身也有助于判断
+      options:
+        - label: 跑过 `scripts/selfcheck_pages.py` / `selfcheck_import.py` / `selfcheck_flow.py`
+        - label: 确认 `.env` 配置正确、数据库能连上
+        - label: 确认当前不是登录态过期（刷新页面重新登录后仍复现）

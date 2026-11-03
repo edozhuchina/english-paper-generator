@@ -1,0 +1,52 @@
+name: 功能建议
+description: 新想法、体验改进、排版与导出需求
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: 想解决什么问题
+      description: 先描述实际场景和困扰，不要直接给方案 —— 方案可能不止一种
+      placeholder: |
+        每个班难度不一样，同一份题要重复组三遍，
+        每次都得重新筛选、重新勾题。
+    validations:
+      required: true
+
+  - type: textarea
+    id: expect
+    attributes:
+      label: 期望的做法
+      description: 你希望界面怎么变、流程怎么走
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: 涉及模块
+      description: 不确定选哪个就选「其他」
+      options:
+        - 题库（录入、筛选、编辑）
+        - 批量导入（Excel / Word / AI）
+        - 组卷（板块、加题、排序、分值）
+        - Word 导出（排版、字号、答案页）
+        - 试卷打印页
+        - 账号与权限（注册、审批、后台）
+        - 部署与脚本
+        - 其他
+    validations:
+      required: true
+
+  - type: textarea
+    id: workaround
+    attributes:
+      label: 现在的替代方案
+      description: 你目前怎么绕过这个问题（没有就留空）
+
+  - type: markdown
+    attributes:
+      value: |
+        提需求前可以先看一眼 README 的「功能一览」和已开的 Issue，
+        避免重复。这个系统是单人业余维护，排期不保证，但需求描述得越具体越容易被采纳。
